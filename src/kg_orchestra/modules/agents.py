@@ -13,11 +13,11 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
 from sentence_transformers import SparseEncoder, SentenceTransformer
-from modules.output_models import Pathway, ParagraphSummaries, ParagraphsEvaluationsOutput, Hop, TripletEvaluation, AlignedHop, EntityMatchingOutput
-from modules.biomedical_models import BiomedicalTriplet
-from modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
-from modules.output_models import Pathway, Hop, AlignedHop, EntityMatchingOutput, FixedRelation
-from modules.pubmed import ArticlePipeline
+from kg_orchestra.modules.output_models import Pathway, ParagraphsEvaluationsOutput, Hop, TripletEvaluation, AlignedHop, EntityMatchingOutput
+from kg_orchestra.modules.biomedical_models import BiomedicalTriplet
+from kg_orchestra.modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
+from kg_orchestra.modules.output_models import Pathway, Hop, AlignedHop, EntityMatchingOutput, FixedRelation
+from kg_orchestra.modules.pubmed import ArticlePipeline
 import subprocess
 import time
 import platform

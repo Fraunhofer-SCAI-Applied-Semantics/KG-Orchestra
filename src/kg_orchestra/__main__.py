@@ -24,10 +24,10 @@ import argparse
 import time
 import logging
 from sentence_transformers import SentenceTransformer
-from modules.agents import *
-from modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
-from modules.neo4j_io import SeedKG, KGEnricher
-from modules.pubmed import build_pipeline
+from kg_orchestra.modules.agents import *
+from kg_orchestra.modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
+from kg_orchestra.modules.neo4j_io import SeedKG, KGEnricher
+from kg_orchestra.modules.pubmed import build_pipeline
 
 # Configure logging
 
@@ -97,10 +97,10 @@ def main():
     # Keep the exact commands; replace prints with logging only.
 
     logger.info("starting Ollama Server ...")
-    subprocess.run(f"module load {args.ollama_module}", shell=True)
     subprocess.run("killall -9 ollama", shell=True)
-    time.sleep(10)
+    subprocess.run(f"module load {args.ollama_module}", shell=True)
     subprocess.run("ollama serve &", shell=True)
+    time.sleep(10)
 
     # ===================================================================== Initiate Clients and Agents =====================================================================
 

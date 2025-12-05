@@ -14,13 +14,13 @@ from typing import Dict, List
 import pandas as pd
 import torch
 from tqdm import tqdm
-from modules.biomedical_models import BiomedicalEntity, BiomedicalTriplet
-from modules.clients import EntityHarmonizer
+from kg_orchestra.modules.biomedical_models import BiomedicalEntity, BiomedicalTriplet
+from kg_orchestra.modules.clients import EntityHarmonizer
 from neo4j import GraphDatabase
-from modules.agents import ParagraphEvaluator, HopValidationTeam, PathwayBuilder, HopAligner, EntityMatcherEvaluator
-from modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
-from modules.output_models import Pathway, Hop, AlignedHop, EntityMatchingOutput
-from modules.pubmed import ArticlePipeline
+from kg_orchestra.modules.agents import ParagraphEvaluator, HopValidationTeam, PathwayBuilder, HopAligner, EntityMatcherEvaluator
+from kg_orchestra.modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
+from kg_orchestra.modules.output_models import Pathway, Hop, AlignedHop, EntityMatchingOutput
+from kg_orchestra.modules.pubmed import ArticlePipeline
 import subprocess
 import time
 import platform

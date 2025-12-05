@@ -1,6 +1,5 @@
 from typing import List, Literal
 from pydantic import BaseModel, Field, model_validator
-from modules.biomedical_models import RelationType, EntityType
 
 """
 Pydantic output models used across KG-Orchestra agents.

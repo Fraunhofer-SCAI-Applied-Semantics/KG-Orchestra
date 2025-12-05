@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import torch
-# from modules.agents import Vectorizer
-from modules.biomedical_models import BiomedicalParagraph
+# from kg_orchestra.modules.agents import Vectorizer
+from kg_orchestra.modules.biomedical_models import BiomedicalParagraph
 from qdrant_client import QdrantClient
 from transformers import AutoModel, AutoTokenizer
 from sentence_transformers import SparseEncoder
