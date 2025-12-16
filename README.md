@@ -77,7 +77,7 @@ git clone git@github.com:Fraunhofer-SCAI-Applied-Semantics/KG-Orchestra.git
 cd KG-Orchestra
 
 # 2) Install with PDM (creates/uses a managed virtual environment)
-
+pip install pdm
 pdm install
 ```
 
@@ -198,7 +198,6 @@ Note on HPC module environments:
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| --gpu | int | 0 | GPU ID (used by embedding models if applicable) |
 | --neo4j_url | str | bolt://localhost:7687 | Neo4j URI |
 | --neo4j_username | str | neo4j | Neo4j username |
 | --neo4j_password | str | 55555555 | Neo4j password |
