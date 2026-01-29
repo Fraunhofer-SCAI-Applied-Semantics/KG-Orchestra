@@ -1,6 +1,8 @@
 import os
 import uuid
 from bs4 import BeautifulSoup
+import nltk
+nltk.download("punkt")
 from nltk.tokenize import sent_tokenize, word_tokenize
 import psutil
 from sentence_transformers import SentenceTransformer
