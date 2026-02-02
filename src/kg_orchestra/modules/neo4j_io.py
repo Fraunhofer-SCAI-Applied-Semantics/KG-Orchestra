@@ -5,6 +5,7 @@ import os
 import random
 import shutil
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+import signal
 import traceback
 import numpy as np
 random.seed(42)  # pick any integer
@@ -17,7 +18,7 @@ from tqdm import tqdm
 from kg_orchestra.modules.biomedical_models import BiomedicalEntity, BiomedicalTriplet
 from kg_orchestra.modules.clients import EntityHarmonizer
 from neo4j import GraphDatabase
-from kg_orchestra.modules.agents import ParagraphEvaluator, HopValidationTeam, PathwayBuilder, HopAligner, EntityMatcherEvaluator
+from kg_orchestra.modules.agents import ParagraphEvaluator, HopValidationTeam, PathwayBuilder, HopAligner, EntityMatcherEvaluator,restart_ollama
 from kg_orchestra.modules.clients import EntityHarmonizer, PubmedFetcher, ParentParagraphFetcher
 from kg_orchestra.modules.output_models import Pathway, Hop, AlignedHop, EntityMatchingOutput
 from kg_orchestra.modules.pubmed import ArticlePipeline
@@ -254,18 +255,18 @@ ORDER BY head ASC
             entity_inferred = self._entity_harmonizer.fetch(f"{entity.name} {entity.entity_type}", 1)[0]
             entity.mapped_umls_cui = entity_inferred.get('cui')
             entity.mapped_synonym = entity_inferred.get('synonyms')
-
             current_existing_nodes.append((entity.mapped_umls_cui, entity))
             self._session.run(
-            f"""
+                """
                 MATCH (n)
-                WHERE 
-                elementId(n) = "{entity.entity_id}"
-                SET n.mapped_umls_cui = "{entity.mapped_umls_cui}"
-                SET n.mapped_umls_synonym = "{entity.mapped_synonym}"
-            """
+                WHERE elementId(n) = $entity_id
+                SET n.mapped_umls_cui = $cui
+                SET n.mapped_umls_synonym = $synonym
+                """,
+                entity_id=entity.entity_id,
+                cui=entity.mapped_umls_cui,
+                synonym=entity.mapped_synonym
             )
-        
         self.existing_nodes = current_existing_nodes
         return
 
@@ -709,6 +710,7 @@ class KGEnricher():
         self.export_folder:str = export_folder
         self.llm_name = llm_name
         self._timeout = timeout
+        self.ollama_port=ollama_port
         
         # Clients
         self.seed_kg:SeedKG = seed_kg
@@ -741,18 +743,12 @@ class KGEnricher():
                 return future.result(timeout=timeout)
             except TimeoutError:
                 logger.info(f"[Ollama] timed out after {timeout} seconds")
-                self.restart_ollama()
+                restart_ollama(port=self.ollama_port)
                 if os.path.exists(triplet_folder):
                     shutil.rmtree(triplet_folder)
                     logger.info(f"[Terminating] Deleted directory: {triplet_folder}")
                 return None  # or raise, or return defaults
             
-    def restart_ollama(self, log_file=".logs/ollama.log"):
-        logger.info(f"[Ollama] starting / restarting Ollama server")
-        subprocess.run(f"killall -9 ollama", shell=True)
-        time.sleep(10)
-        subprocess.run(f"ollama serve &", shell=True)
-        time.sleep(10)
 
     def _fetch_pubmed_online(self, query_question:str, triplet:BiomedicalTriplet, triplet_report_folder:str) -> dict[int,dict]:
         """Fetch Pubmed Web for relevant articles and paragraphs."""
@@ -1154,7 +1150,7 @@ class KGEnricher():
         enriched_triplets = []
 
         # Start Enrichment
-        for triplet in triplets_to_be_enriched:
+        for triplet in tqdm(triplets_to_be_enriched, desc="Enriching Triplets", unit="Triplet"):
             
             # Print Reports
             if latencies:
@@ -1182,7 +1178,7 @@ class KGEnricher():
             if self.export_folder:
                 # Create Triplet Folder for report files
                 triplet_str = f'{triplet}'
-                triplet_report_folder = f'{self.export_folder}/triplets/{triplet_str.replace(" ","_").lower()}'
+                triplet_report_folder = f'{self.export_folder}/triplets/{triplet_str.replace(" ","_").lower()[:150]}'
                 if os.path.exists(triplet_report_folder):
                     logger.info(f"Query {triplet_index}/{len(triplets_to_be_enriched)} has been processed. Skipping...")
                     continue

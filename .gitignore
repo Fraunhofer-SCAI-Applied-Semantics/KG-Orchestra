@@ -166,3 +166,5 @@ cython_debug/
 .csv
 .out
 .csv
+src/kg_orchestra/modules/ndd_para_report.csv
+src/kg_orchestra/modules/failed_ndd_para_report.csv

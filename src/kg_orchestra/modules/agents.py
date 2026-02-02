@@ -3,6 +3,7 @@ from copy import deepcopy
 import json
 import os
 import random
+import signal
 import textwrap
 import shutil
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
@@ -476,6 +477,7 @@ class HopValidationTeam():
         self.pubmed_fetcher:PubmedFetcher = pubmed_fetcher
         self.parent_paragraph_fetcher:ParentParagraphFetcher = parent_paragraph_fetcher
         self.pubmed_web_fetcher:ArticlePipeline = pubmed_web_fetcher
+        self.ollama_port=ollama_port
         self.paragraph_evaluator:ParagraphEvaluator = ParagraphEvaluator(model=model, temperature=temperature, ollama_port=ollama_port)
         self.top_k:int = top_k
         
@@ -925,32 +927,6 @@ Please return the **proposed relation** in the provided format.
 
         return relevant_paragraphs_map if relevant_paragraphs_map else []
 
-    def restart_ollama(self, log_file=".logs/ollama.log"):
-            logger.info(f"[Ollama] starting / restarting Ollama server and log to {log_file}")
-            # Make sure the log directory exists
-            os.makedirs(os.path.dirname(log_file), exist_ok=True)
-
-            # Kill existing Ollama process
-            system = platform.system()
-            if system in ("Linux", "Darwin"):  # macOS/Linux
-                subprocess.run(["pkill", "-f", "ollama"], check=False)
-            elif system == "Windows":
-                subprocess.run(["taskkill", "/IM", "ollama.exe", "/F"], check=False)
-
-            time.sleep(2)  # give it time to shut down
-
-            # Open the log file for appending
-            f = open(log_file, "a")
-
-            # Restart Ollama and redirect logs
-            subprocess.Popen(
-                [os.path.expanduser("~/.local/bin/ollama"), "serve"],
-                stdout=f,
-                stderr=f,
-                preexec_fn=None if system == "Windows" else os.setpgrp  # detach on Unix
-            )
-
-            logger.info(f"[Ollama] Ollama restarted, logs are in {log_file}")
 
     def _run_with_timeout(self, func, *args, timeout=300, triplet_folder:str="", **kwargs):
         with ThreadPoolExecutor() as executor:
@@ -959,11 +935,12 @@ Please return the **proposed relation** in the provided format.
                 return future.result(timeout=timeout)
             except TimeoutError:
                 logger.info(f"[Ollama] timed out after {timeout} seconds")
-                self.restart_ollama()
+                self.restart_ollama(port=self.ollama_port)
                 if os.path.exists(triplet_folder):
                     shutil.rmtree(triplet_folder)
                     logger.info(f"[Terminating] Deleted directory: {triplet_folder}")
                 return None  # or raise, or return defaults
+    
             
     def evaluate_and_fix_triplets(self, initial_triplets:List[BiomedicalTriplet], current_relations:set[str], only_validate:bool=False) -> List[tuple[Hop,str,int]]:
         
@@ -1620,3 +1597,46 @@ class EntityMatcherEvaluator():
         response_obj = EntityMatchingOutput.model_validate_json(response.model_dump_json())
 
         return response_obj
+    
+
+
+def find_ollama_on_port(port=11434):
+    """
+    Check if an Ollama server is already running on port.
+    Returns the PID if found, otherwise returns None.
+    """
+    try:
+        # List processes listening on the port
+        out = subprocess.check_output(
+            ["lsof", "-i", f":{port}", "-sTCP:LISTEN", "-n", "-P"]
+        ).decode()
+        for line in out.splitlines()[1:]:  # Skip header line
+            if "ollama" in line.lower():
+                pid = int(line.split()[1])
+                logger.info(f"[Ollama] detected existing server with PID {pid}")
+                return pid
+    except Exception:
+        pass
+    return None
+
+
+def restart_ollama(port=11434):
+    logger.info("[Ollama] starting / restarting Ollama server")
+
+    pid = find_ollama_on_port(port)
+
+    if pid is not None:
+        logger.info(f"[Ollama] stopping existing Ollama server (PID {pid})")
+        os.killpg(pid, signal.SIGKILL)
+        logger.info(f"[Ollama] Existing Ollama server (PID {pid}) Stopped")
+
+    subprocess.Popen(
+        ["ollama", "serve"],
+        env={**os.environ, "OLLAMA_HOST": f"127.0.0.1:{port}"},
+        preexec_fn=os.setsid   # new process group
+        # stdout/stderr inherit → prints to shell
+    )
+
+
+     
+    

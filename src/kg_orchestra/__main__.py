@@ -29,6 +29,7 @@ from kg_orchestra.modules.clients import EntityHarmonizer, PubmedFetcher, Parent
 from kg_orchestra.modules.neo4j_io import SeedKG, KGEnricher
 from kg_orchestra.modules.pubmed import build_pipeline
 
+
 # Configure logging
 
 logging.basicConfig(
@@ -97,10 +98,8 @@ def main():
     # Keep the exact commands; replace prints with logging only.
 
     logger.info("starting Ollama Server ...")
-    subprocess.run("killall -9 ollama", shell=True)
     subprocess.run(f"module load {args.ollama_module}", shell=True)
-    subprocess.run("ollama serve &", shell=True)
-    time.sleep(10)
+    restart_ollama(port=args.ollama_port)
 
     # ===================================================================== Initiate Clients and Agents =====================================================================
 
