@@ -4,6 +4,7 @@ import json
 import os
 import random
 import shutil
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import signal
 import traceback
@@ -1175,10 +1176,13 @@ class KGEnricher():
                 continue
 
             # Prepare Export folder for triplet in-process files. Skip Triplet, if a similar triplet has been processed before.
+            failed_folder_path = f'{self.export_folder}/triplets/failed'
+            os.makedirs(failed_folder_path, exist_ok=True) # Create a folder for failed triplets
+            
             if self.export_folder:
                 # Create Triplet Folder for report files
                 triplet_str = f'{triplet}'
-                triplet_report_folder = f'{self.export_folder}/triplets/{triplet_str.replace(" ","_").lower()[:150]}'
+                triplet_report_folder = f'{self.export_folder}/triplets/processed/{triplet_str.replace(" ","_").lower()[:150]}'
                 if os.path.exists(triplet_report_folder):
                     logger.info(f"Query {triplet_index}/{len(triplets_to_be_enriched)} has been processed. Skipping...")
                     continue
@@ -1261,6 +1265,12 @@ class KGEnricher():
             except Exception as e:
                 logger.info(f"[FAIL] Triplet: {triplet} failed due to : {e}")
                 traceback.print_exc()
+
+                # Moving Triplet Folder to failed parent folder
+                destination = Path(f'{self.export_folder}/triplets/failed/{triplet_str.replace(" ","_").lower()[:150]}')
+                destination.parent.mkdir(parents=True, exist_ok=True)
+
+                shutil.move(triplet_report_folder, destination)
                 fails.append(1)
                 continue
         
