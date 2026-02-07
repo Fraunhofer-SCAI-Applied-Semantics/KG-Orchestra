@@ -286,8 +286,8 @@ def process_article(xml_files, pmc_folder):
 def process_all(pmc_folder):
     create_tables()
 
-    success_csv_path = 'ndd_para_report.csv'
-    failed_csv_path = 'failed_ndd_para_report.csv'
+    success_csv_path = 'success_paragraph_report.csv'
+    failed_csv_path = 'failed_paragraph_report.csv'
 
     # Collect all XML files
     articles = set([f for f in os.listdir(pmc_folder) if f.endswith(".xml")])
@@ -363,10 +363,11 @@ if __name__ == "__main__":
     print("Model loaded successfully!")
 
     # Connect to local Qdrant (adjust URL and timeout as needed)
-    client = QdrantClient(url="http://localhost:10333", timeout=600.0)
+    qdrant_port = input('PLease provide the port for qdrant database: ') or "10333"
+    client = QdrantClient(url=f"http://localhost:{qdrant_port}", timeout=600.0)
 
     # Name of the collection
-    COLLECTION_NAME = 'neurodegenerative_diseases_papers'
+    COLLECTION_NAME = input("Please provide collection name without spaces: ") or "ndd_paragraphs_collection"
 
     print("qdrant connected successfully!")
 
@@ -392,7 +393,7 @@ if __name__ == "__main__":
     print("Starting article processing...")
     
     # Define PMC folder path (Papers to be processed)
-    pmc_folder = "/home/bio/groupshare/amohamed/workspace/alzminer/data/pubmed_ad/neurodegenerative_diseases_pmc"
+    pmc_folder = input("Please input the path for the folder containing the papers: ") 
 
     # Process all articles in the folder
     process_all(pmc_folder)

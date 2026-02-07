@@ -10,7 +10,9 @@ class Paragraph(Base):
     paragraph_text = Column(String, nullable=False)
 
 # SQLite setup
-engine = create_engine("sqlite:////home/bio/groupshare/amohamed/workspace/alzminer/databases/ndd_paragraphs_db/ndd_para_paragraphs.db") # Change this path as needed.
+db_name = input("Please provide a name for your sql database without spaces: ") or "ndd_paragraphs"
+db_path = input ("Please provide a path for the database folder: ") or "db"
+engine = create_engine(f"sqlite:///{db_path}/{db_name}.db") # Change this path as needed.
 Session = sessionmaker(bind=engine)
 
 def create_tables():

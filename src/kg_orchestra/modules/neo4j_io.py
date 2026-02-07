@@ -59,7 +59,7 @@ class SeedKG(GraphDatabase):
 MATCH (n)-[r]->(m)
 WHERE 
   r.evidence IS NOT NULL AND
-  r.llm_validated is NULL
+  r.orchestra_processed is NULL
 RETURN 
   n.name AS head, 
   labels(n) AS head_type,
@@ -690,6 +690,25 @@ ORDER BY head ASC
         else:
             raise ValueError("No Seed KG files/ports detected.")
         
+    def add_triplet_Processed(self, evaluated_triplet:Dict):
+
+        """Add validation reports to seed triplet."""
+        # Prepare the Cypher query to add the new evidence
+
+        if self._session:
+
+            q = f"""MATCH (seed_head)-[r]->(seed_tail)
+        WHERE elementId(seed_head) = $headId AND elementId(seed_tail) = $tailId AND type(r) = $relation
+        SET r.orchestra_processed = true"""
+        
+        # Run the query to add the new triplets to the knowledge graph
+            self._session.run(q, {
+                "headId": evaluated_triplet['triplet'].head.entity_id,
+                "tailId": evaluated_triplet['triplet'].tail.entity_id,
+                "relation": evaluated_triplet['triplet'].relation,
+            })
+        
+
 class KGEnricher():
     def __init__(self,
         llm_name:str,
@@ -1262,6 +1281,9 @@ class KGEnricher():
                 
                 elapsed = perf_counter() - start_time
                 latencies.append(round(elapsed))
+                logger.info(f"[Seed Triplet Processed] Triplet has been processed")
+                self.seed_kg.add_triplet_Processed(evaluated_triplet)
+                
             except Exception as e:
                 logger.info(f"[FAIL] Triplet: {triplet} failed due to : {e}")
                 traceback.print_exc()
