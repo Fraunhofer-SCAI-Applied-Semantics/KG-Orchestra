@@ -935,7 +935,7 @@ Please return the **proposed relation** in the provided format.
                 return future.result(timeout=timeout)
             except TimeoutError:
                 logger.info(f"[Ollama] timed out after {timeout} seconds")
-                self.restart_ollama(port=self.ollama_port)
+                restart_ollama(port=self.ollama_port)
                 if os.path.exists(triplet_folder):
                     shutil.rmtree(triplet_folder)
                     logger.info(f"[Terminating] Deleted directory: {triplet_folder}")
