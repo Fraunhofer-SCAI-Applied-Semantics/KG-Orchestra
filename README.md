@@ -73,7 +73,7 @@ Python packages (install via pip):
 
 ```bash
 # 1) Clone
-git clone git@github.com:Fraunhofer-SCAI-Applied-Semantics/KG-Orchestra.git
+git clone https://github.com/Fraunhofer-SCAI-Applied-Semantics/KG-Orchestra.git
 cd KG-Orchestra
 
 # 2) Install with PDM (creates/uses a managed virtual environment)
